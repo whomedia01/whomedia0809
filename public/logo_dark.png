@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 40" width="210" height="40">
+  <style>
+    .brand-bold { font-family: 'Pretendard', 'Paperlogy', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 900; }
+  </style>
+  <g transform="translate(0, 31)">
+    <!-- WHO in Crimson Red -->
+    <text class="brand-bold" x="0" y="0" font-size="33" fill="#B91C1C" letter-spacing="-0.8">WHO</text>
+    <!-- MEDIA in Dark Navy/Black -->
+    <text class="brand-bold" x="82" y="0" font-size="33" fill="#0F172A" letter-spacing="-0.4">MEDIA</text>
+  </g>
+</svg>
