@@ -1,25 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { KEYWORDS } from '../data/portfolioData';
-import { Play, ChevronDown, Video, Sparkles } from 'lucide-react';
+import { Play, ChevronDown, Video } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { MosaicCardFlip } from './MosaicCardFlip';
 import { ParticleBackground } from './ParticleBackground';
 
+const DYNAMIC_KEYWORDS = [
+  '이러닝 콘텐츠 개발',
+  '하이엔드 영상 제작',
+  '블렌디드 러닝'
+];
+
 const BG_IMAGES = [
-  'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1920&q=85',
-  'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1920&q=85',
-  'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1920&q=85',
-  'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=85'
+  'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1920&q=85', // 4K Broadcast Camera & Studio Production
+  'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1920&q=85', // Electronic Smart Screen & Digital Education
+  'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1920&q=85', // Lecture & Education Presentation
+  'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1920&q=85'  // Studio Control Room & Multi-camera
 ];
 
 export const Hero: React.FC = () => {
-  const [currentKeywordIndex, setCurrentKeywordIndex] = useState(0);
+  const [keywordIndex, setKeywordIndex] = useState(0);
+  const [displayedText, setDisplayedText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
   const [windowWidth, setWindowWidth] = useState<number>(
     typeof window !== 'undefined' ? window.innerWidth : 1200
   );
   const heroRef = useRef<HTMLElement>(null);
-
   const containerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -28,7 +34,7 @@ export const Hero: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Dynamically calculate staggerDelay and grid density for optimal mobile performance & FPS
+  // Responsive grid density for background card flip
   const isMobile = windowWidth < 640;
   const isTablet = windowWidth >= 640 && windowWidth < 1024;
 
@@ -57,20 +63,40 @@ export const Hero: React.FC = () => {
   const textOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
   const metricsY = useTransform(scrollYProgress, [0, 1], ['0px', '45px']);
 
-  // Keyword rolling interval (2.8s)
+  // Dynamic Keyword Typing Animation (2~3s cycle per keyword)
   useEffect(() => {
-    const keywordInterval = setInterval(() => {
-      setCurrentKeywordIndex((prev) => (prev + 1) % KEYWORDS.length);
-    }, 2800);
+    const currentWord = DYNAMIC_KEYWORDS[keywordIndex];
+    const typingSpeed = isDeleting ? 45 : 90;
 
-    return () => clearInterval(keywordInterval);
-  }, []);
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        if (displayedText.length < currentWord.length) {
+          setDisplayedText(currentWord.slice(0, displayedText.length + 1));
+        } else {
+          // Pause at full word for 2.2s before deleting
+          const pauseTimeout = setTimeout(() => {
+            setIsDeleting(true);
+          }, 2200);
+          return () => clearTimeout(pauseTimeout);
+        }
+      } else {
+        if (displayedText.length > 0) {
+          setDisplayedText(currentWord.slice(0, displayedText.length - 1));
+        } else {
+          setIsDeleting(false);
+          setKeywordIndex((prev) => (prev + 1) % DYNAMIC_KEYWORDS.length);
+        }
+      }
+    }, typingSpeed);
 
-  // Background slider interval (4s)
+    return () => clearTimeout(timeout);
+  }, [displayedText, isDeleting, keywordIndex]);
+
+  // Background slider interval (4.5s)
   useEffect(() => {
     const bgInterval = setInterval(() => {
       setCurrentBgIndex((prev) => (prev + 1) % BG_IMAGES.length);
-    }, 4000);
+    }, 4500);
 
     return () => clearInterval(bgInterval);
   }, []);
@@ -84,7 +110,7 @@ export const Hero: React.FC = () => {
       {/* Background Parallax Layer with Dynamic Mosaic Card Flip */}
       <motion.div 
         style={{ y: bgY, scale: bgScale }}
-        className="absolute inset-0 w-full h-full pointer-events-none z-0 origin-center opacity-30"
+        className="absolute inset-0 w-full h-full pointer-events-none z-0 origin-center opacity-40"
       >
         <ParticleBackground />
 
@@ -96,10 +122,10 @@ export const Hero: React.FC = () => {
           cols={gridCols}
         />
 
-        {/* Background Video Loop Overlay using whomedia_hero.mp4 */}
+        {/* Background Video Loop with Studio & Camera Framing */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           <video
-            className="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none border-0 opacity-40 mix-blend-screen"
+            className="w-full h-full object-cover object-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none border-0 opacity-45 mix-blend-screen"
             autoPlay
             loop
             muted
@@ -111,12 +137,45 @@ export const Hero: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Radial Gradient & Grid Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-slate-950 pointer-events-none z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-950/30 via-slate-950/80 to-slate-950 pointer-events-none z-0" />
+      {/* Darkened Overlay (tuned to rgba(15, 23, 42, 0.70-0.85) for optimal contrast on mobile) */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/95 via-slate-950/80 to-slate-950 pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-950/40 via-slate-950/75 to-slate-950 pointer-events-none z-0" />
 
-      {/* Subtle Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b20_1px,transparent_1px),linear-gradient(to_bottom,#1e293b20_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_20%,#000_70%,transparent_100%)] pointer-events-none z-0" />
+      {/* Subtle Tech Grid Pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b25_1px,transparent_1px),linear-gradient(to_bottom,#1e293b25_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_20%,#000_70%,transparent_100%)] pointer-events-none z-0" />
+
+      {/* Mobile Floating Badges (B2B Authority & Equipment Trust) */}
+      <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden md:hidden">
+        {/* Badge 1: Top-Right */}
+        <div className="absolute top-20 sm:top-24 right-3 sm:right-6 animate-float-1 pointer-events-auto">
+          <div className="badge-glass px-2.5 sm:px-3 py-1.5 flex items-center gap-1.5 shadow-lg shadow-black/30">
+            <span className="text-xs sm:text-sm">🎥</span>
+            <span className="text-[11px] sm:text-xs font-bold text-white/95 tracking-tight whitespace-nowrap">
+              160평 전용 스튜디오
+            </span>
+          </div>
+        </div>
+
+        {/* Badge 2: Mid-Left */}
+        <div className="absolute top-[37%] left-3 sm:left-6 animate-float-2 pointer-events-auto">
+          <div className="badge-glass px-2.5 sm:px-3 py-1.5 flex items-center gap-1.5 shadow-lg shadow-black/30">
+            <span className="text-xs sm:text-sm">📚</span>
+            <span className="text-[11px] sm:text-xs font-bold text-white/95 tracking-tight whitespace-nowrap">
+              17년 B2B 교육 노하우
+            </span>
+          </div>
+        </div>
+
+        {/* Badge 3: Lower-Right */}
+        <div className="absolute bottom-[28%] right-3 sm:right-6 animate-float-3 pointer-events-auto">
+          <div className="badge-glass px-2.5 sm:px-3 py-1.5 flex items-center gap-1.5 shadow-lg shadow-black/30">
+            <span className="text-xs sm:text-sm">✨</span>
+            <span className="text-[11px] sm:text-xs font-bold text-white/95 tracking-tight whitespace-nowrap">
+              4K 시네마틱 제작
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Main Vertically Centered Content Container with Parallax Effect */}
       <motion.div 
@@ -125,29 +184,31 @@ export const Hero: React.FC = () => {
       >
         <div className="text-center max-w-4xl mx-auto space-y-4 sm:space-y-6 md:space-y-7 w-full my-auto">
           
-          {/* Main Title & Dynamic Keyword Subheading */}
-          <div className="space-y-2.5 sm:space-y-4">
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.25] sm:leading-tight break-keep">
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 font-black mb-1">
-                이러닝 개발 · 영상 제작 · 홍보 마케팅
-              </span>
-              <span className="text-white text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black block">
-                성공을 이끄는 통합 솔루션
+          {/* Main Title with Dynamic Keyword Typing */}
+          <div className="space-y-2 sm:space-y-3">
+            
+            {/* Upper Prefix Line */}
+            <div className="text-slate-300 text-sm sm:text-lg md:text-xl font-bold tracking-tight">
+              지식을 성과로 만드는
+            </div>
+
+            {/* Dynamic Typed Keyword with Brackets */}
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight break-keep">
+              <span className="inline-flex items-center justify-center flex-wrap gap-1.5 sm:gap-2">
+                <span className="text-red-400 font-extrabold">[</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-rose-300 to-amber-300 font-black">
+                  {displayedText}
+                </span>
+                <span className="inline-block w-0.5 sm:w-1 h-6 sm:h-9 md:h-11 bg-red-400 animate-pulse align-middle" />
+                <span className="text-red-400 font-extrabold">]</span>
+                <span className="text-white font-black ml-1">전문 그룹</span>
               </span>
             </h1>
 
-            <p className="text-slate-200 text-xs sm:text-base md:text-lg font-medium leading-relaxed max-w-xl mx-auto px-2 break-keep">
-              기획부터 제작·마케팅까지 원스톱으로, 귀사의 프로젝트를 완벽하게 이끕니다.
+            {/* Sub-description */}
+            <p className="text-slate-300 text-xs sm:text-base md:text-lg font-medium leading-relaxed max-w-xl mx-auto px-2 break-keep pt-1">
+              이러닝 기획부터 4K 스튜디오 촬영, 미디어 마케팅까지 원스톱으로 성공적인 과업을 완수합니다.
             </p>
-
-            {/* Rolling Keyword Display */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-300 font-medium shadow-md">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
-              <span>주요 역량: </span>
-              <span className="text-red-400 font-bold transition-all duration-300">
-                {KEYWORDS[currentKeywordIndex]}
-              </span>
-            </div>
           </div>
 
           {/* Action CTA Buttons */}
@@ -170,7 +231,7 @@ export const Hero: React.FC = () => {
 
           {/* Key Metrics Dashboard Card with Parallax */}
           <motion.div style={{ y: metricsY }} className="pt-2 sm:pt-4">
-            <div className="p-3.5 sm:p-5 md:p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-2xl max-w-4xl mx-auto">
+            <div className="p-3.5 sm:p-5 md:p-6 rounded-2xl bg-slate-900/85 border border-slate-800 backdrop-blur-md shadow-2xl max-w-4xl mx-auto">
               <div className="grid grid-cols-3 gap-2 sm:gap-6 divide-x divide-slate-800/80">
                 
                 {/* Metric 1 */}
@@ -180,7 +241,7 @@ export const Hero: React.FC = () => {
                     <span className="text-xs sm:text-base font-bold text-emerald-400">년</span>
                   </div>
                   <div className="text-[10px] sm:text-xs md:text-sm text-slate-300 font-bold mt-0.5 sm:mt-1">
-                    축적의 노하우
+                    B2B 교육 노하우
                   </div>
                 </div>
 
@@ -228,3 +289,4 @@ export const Hero: React.FC = () => {
 };
 
 export default Hero;
+
