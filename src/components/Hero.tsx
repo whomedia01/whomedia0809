@@ -12,14 +12,14 @@ const DYNAMIC_KEYWORDS = [
 
 const BG_IMAGES = [
   'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1920&q=85', // 4K Broadcast Camera & Studio Production
-  'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1920&q=85', // Electronic Smart Screen & Digital Education
-  'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1920&q=85', // Lecture & Education Presentation
+  'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1920&q=85', // Electronic Smart Blackboard & Digital Education
+  'https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?auto=format&fit=crop&w=1920&q=85', // Online Lecture & Educational Tech
   'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1920&q=85'  // Studio Control Room & Multi-camera
 ];
 
 export const Hero: React.FC = () => {
   const [keywordIndex, setKeywordIndex] = useState(0);
-  const [displayedText, setDisplayedText] = useState('');
+  const [displayedText, setDisplayedText] = useState(DYNAMIC_KEYWORDS[0]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
   const [windowWidth, setWindowWidth] = useState<number>(
@@ -35,8 +35,8 @@ export const Hero: React.FC = () => {
   }, []);
 
   // Responsive grid density for background card flip
-  const isMobile = windowWidth < 640;
-  const isTablet = windowWidth >= 640 && windowWidth < 1024;
+  const isMobile = windowWidth < 768;
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
 
   const staggerDelay = isMobile ? 24 : isTablet ? 18 : 12;
   const gridRows = isMobile ? 5 : isTablet ? 6 : 8;
@@ -65,29 +65,30 @@ export const Hero: React.FC = () => {
 
   // Dynamic Keyword Typing Animation (2~3s cycle per keyword)
   useEffect(() => {
+    let timeout: NodeJS.Timeout;
     const currentWord = DYNAMIC_KEYWORDS[keywordIndex];
-    const typingSpeed = isDeleting ? 45 : 90;
 
-    const timeout = setTimeout(() => {
-      if (!isDeleting) {
-        if (displayedText.length < currentWord.length) {
+    if (!isDeleting) {
+      if (displayedText.length < currentWord.length) {
+        timeout = setTimeout(() => {
           setDisplayedText(currentWord.slice(0, displayedText.length + 1));
-        } else {
-          // Pause at full word for 2.2s before deleting
-          const pauseTimeout = setTimeout(() => {
-            setIsDeleting(true);
-          }, 2200);
-          return () => clearTimeout(pauseTimeout);
-        }
+        }, 90);
       } else {
-        if (displayedText.length > 0) {
-          setDisplayedText(currentWord.slice(0, displayedText.length - 1));
-        } else {
-          setIsDeleting(false);
-          setKeywordIndex((prev) => (prev + 1) % DYNAMIC_KEYWORDS.length);
-        }
+        // Pause for 2.2s before deleting
+        timeout = setTimeout(() => {
+          setIsDeleting(true);
+        }, 2200);
       }
-    }, typingSpeed);
+    } else {
+      if (displayedText.length > 0) {
+        timeout = setTimeout(() => {
+          setDisplayedText(currentWord.slice(0, displayedText.length - 1));
+        }, 45);
+      } else {
+        setIsDeleting(false);
+        setKeywordIndex((prev) => (prev + 1) % DYNAMIC_KEYWORDS.length);
+      }
+    }
 
     return () => clearTimeout(timeout);
   }, [displayedText, isDeleting, keywordIndex]);
@@ -101,11 +102,20 @@ export const Hero: React.FC = () => {
     return () => clearInterval(bgInterval);
   }, []);
 
+  // Glassmorphism floating badge style helper
+  const badgeStyle: React.CSSProperties = {
+    background: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '20px',
+  };
+
   return (
     <section 
       ref={heroRef}
       id="about" 
-      className="relative flex flex-col justify-center items-center w-full h-[100dvh] min-h-[100dvh] snap-start snap-always pt-16 sm:pt-20 pb-4 overflow-hidden bg-slate-950 text-white z-0 flex-shrink-0 box-border"
+      className="relative flex flex-col justify-center items-center w-full h-[100dvh] min-h-[100dvh] snap-start snap-always pt-14 sm:pt-20 pb-4 overflow-hidden bg-slate-950 text-white z-0 flex-shrink-0 box-border"
     >
       {/* Background Parallax Layer with Dynamic Mosaic Card Flip */}
       <motion.div 
@@ -138,39 +148,51 @@ export const Hero: React.FC = () => {
       </motion.div>
 
       {/* Darkened Overlay (tuned to rgba(15, 23, 42, 0.70-0.85) for optimal contrast on mobile) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/95 via-slate-950/80 to-slate-950 pointer-events-none z-0" />
+      <div 
+        className="absolute inset-0 pointer-events-none z-0" 
+        style={{ background: 'linear-gradient(to bottom, rgba(2, 6, 23, 0.95), rgba(15, 23, 42, 0.75), rgba(2, 6, 23, 0.95))' }}
+      />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-950/40 via-slate-950/75 to-slate-950 pointer-events-none z-0" />
 
       {/* Subtle Tech Grid Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b25_1px,transparent_1px),linear-gradient(to_bottom,#1e293b25_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_20%,#000_70%,transparent_100%)] pointer-events-none z-0" />
 
-      {/* Mobile Floating Badges (B2B Authority & Equipment Trust) */}
+      {/* Mobile Floating Badges (Floating on ambient background) */}
       <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden md:hidden">
-        {/* Badge 1: Top-Right */}
-        <div className="absolute top-20 sm:top-24 right-3 sm:right-6 animate-float-1 pointer-events-auto">
-          <div className="badge-glass px-2.5 sm:px-3 py-1.5 flex items-center gap-1.5 shadow-lg shadow-black/30">
-            <span className="text-xs sm:text-sm">🎥</span>
-            <span className="text-[11px] sm:text-xs font-bold text-white/95 tracking-tight whitespace-nowrap">
+        {/* Floating Badge 1: Top-Right */}
+        <div className="absolute top-18 right-3 animate-float-1 pointer-events-auto">
+          <div 
+            style={badgeStyle}
+            className="px-2.5 py-1.5 flex items-center gap-1.5 shadow-lg shadow-black/40"
+          >
+            <span className="text-xs">🎥</span>
+            <span className="text-[11px] font-bold text-white/95 tracking-tight whitespace-nowrap">
               160평 전용 스튜디오
             </span>
           </div>
         </div>
 
-        {/* Badge 2: Mid-Left */}
-        <div className="absolute top-[37%] left-3 sm:left-6 animate-float-2 pointer-events-auto">
-          <div className="badge-glass px-2.5 sm:px-3 py-1.5 flex items-center gap-1.5 shadow-lg shadow-black/30">
-            <span className="text-xs sm:text-sm">📚</span>
-            <span className="text-[11px] sm:text-xs font-bold text-white/95 tracking-tight whitespace-nowrap">
+        {/* Floating Badge 2: Mid-Left */}
+        <div className="absolute top-[34%] left-2.5 animate-float-2 pointer-events-auto">
+          <div 
+            style={badgeStyle}
+            className="px-2.5 py-1.5 flex items-center gap-1.5 shadow-lg shadow-black/40"
+          >
+            <span className="text-xs">📚</span>
+            <span className="text-[11px] font-bold text-white/95 tracking-tight whitespace-nowrap">
               17년 B2B 교육 노하우
             </span>
           </div>
         </div>
 
-        {/* Badge 3: Lower-Right */}
-        <div className="absolute bottom-[28%] right-3 sm:right-6 animate-float-3 pointer-events-auto">
-          <div className="badge-glass px-2.5 sm:px-3 py-1.5 flex items-center gap-1.5 shadow-lg shadow-black/30">
-            <span className="text-xs sm:text-sm">✨</span>
-            <span className="text-[11px] sm:text-xs font-bold text-white/95 tracking-tight whitespace-nowrap">
+        {/* Floating Badge 3: Mid-Right */}
+        <div className="absolute top-[52%] right-2.5 animate-float-3 pointer-events-auto">
+          <div 
+            style={badgeStyle}
+            className="px-2.5 py-1.5 flex items-center gap-1.5 shadow-lg shadow-black/40"
+          >
+            <span className="text-xs">✨</span>
+            <span className="text-[11px] font-bold text-white/95 tracking-tight whitespace-nowrap">
               4K 시네마틱 제작
             </span>
           </div>
@@ -182,7 +204,7 @@ export const Hero: React.FC = () => {
         style={{ y: textY, opacity: textOpacity }}
         className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 flex-1 flex flex-col justify-center items-center py-2 sm:py-4"
       >
-        <div className="text-center max-w-4xl mx-auto space-y-4 sm:space-y-6 md:space-y-7 w-full my-auto">
+        <div className="text-center max-w-4xl mx-auto space-y-3.5 sm:space-y-6 md:space-y-7 w-full my-auto">
           
           {/* Main Title with Dynamic Keyword Typing */}
           <div className="space-y-2 sm:space-y-3">
@@ -192,23 +214,38 @@ export const Hero: React.FC = () => {
               지식을 성과로 만드는
             </div>
 
-            {/* Dynamic Typed Keyword with Brackets */}
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight break-keep">
-              <span className="inline-flex items-center justify-center flex-wrap gap-1.5 sm:gap-2">
-                <span className="text-red-400 font-extrabold">[</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-rose-300 to-amber-300 font-black">
+            {/* Dynamic Typed Keyword in Brackets */}
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white break-keep">
+              <span className="block sm:inline">
+                <span className="text-red-400 font-extrabold text-2xl sm:text-4xl md:text-5xl lg:text-6xl">[ </span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-rose-300 to-amber-300 font-black drop-shadow-sm">
                   {displayedText}
                 </span>
-                <span className="inline-block w-0.5 sm:w-1 h-6 sm:h-9 md:h-11 bg-red-400 animate-pulse align-middle" />
-                <span className="text-red-400 font-extrabold">]</span>
-                <span className="text-white font-black ml-1">전문 그룹</span>
+                <span className="inline-block w-0.5 sm:w-1 h-5 sm:h-8 md:h-10 bg-red-400 ml-1 animate-pulse align-middle" />
+                <span className="text-red-400 font-extrabold text-2xl sm:text-4xl md:text-5xl lg:text-6xl"> ]</span>
+              </span>
+              <span className="block sm:inline sm:ml-2.5 text-white font-black">
+                전문 그룹
               </span>
             </h1>
 
             {/* Sub-description */}
-            <p className="text-slate-300 text-xs sm:text-base md:text-lg font-medium leading-relaxed max-w-xl mx-auto px-2 break-keep pt-1">
+            <p className="text-slate-300 text-xs sm:text-base md:text-lg font-medium leading-relaxed max-w-xl mx-auto px-2 break-keep pt-0.5 sm:pt-1">
               이러닝 기획부터 4K 스튜디오 촬영, 미디어 마케팅까지 원스톱으로 성공적인 과업을 완수합니다.
             </p>
+          </div>
+
+          {/* Mobile Badge Bar (Directly in viewport for clear visibility) */}
+          <div className="flex md:hidden items-center justify-center gap-1.5 flex-wrap pt-0.5">
+            <div style={badgeStyle} className="px-2.5 py-1 flex items-center gap-1 text-[11px] font-bold text-slate-200">
+              <span>🎥</span> <span>160평 스튜디오</span>
+            </div>
+            <div style={badgeStyle} className="px-2.5 py-1 flex items-center gap-1 text-[11px] font-bold text-slate-200">
+              <span>📚</span> <span>17년 교육 노하우</span>
+            </div>
+            <div style={badgeStyle} className="px-2.5 py-1 flex items-center gap-1 text-[11px] font-bold text-slate-200">
+              <span>✨</span> <span>4K 제작</span>
+            </div>
           </div>
 
           {/* Action CTA Buttons */}
@@ -230,12 +267,12 @@ export const Hero: React.FC = () => {
           </div>
 
           {/* Key Metrics Dashboard Card with Parallax */}
-          <motion.div style={{ y: metricsY }} className="pt-2 sm:pt-4">
-            <div className="p-3.5 sm:p-5 md:p-6 rounded-2xl bg-slate-900/85 border border-slate-800 backdrop-blur-md shadow-2xl max-w-4xl mx-auto">
+          <motion.div style={{ y: metricsY }} className="pt-1.5 sm:pt-4">
+            <div className="p-3 sm:p-5 md:p-6 rounded-2xl bg-slate-900/85 border border-slate-800 backdrop-blur-md shadow-2xl max-w-4xl mx-auto">
               <div className="grid grid-cols-3 gap-2 sm:gap-6 divide-x divide-slate-800/80">
                 
                 {/* Metric 1 */}
-                <div className="flex flex-col items-center justify-center p-1 text-center">
+                <div className="flex flex-col items-center justify-center p-0.5 sm:p-1 text-center">
                   <div className="text-xl sm:text-3xl md:text-4xl font-black text-white font-sans flex items-baseline justify-center gap-0.5 sm:gap-1">
                     <span>17</span>
                     <span className="text-xs sm:text-base font-bold text-emerald-400">년</span>
@@ -246,7 +283,7 @@ export const Hero: React.FC = () => {
                 </div>
 
                 {/* Metric 2 */}
-                <div className="flex flex-col items-center justify-center p-1 text-center">
+                <div className="flex flex-col items-center justify-center p-0.5 sm:p-1 text-center">
                   <div className="text-xl sm:text-3xl md:text-4xl font-black text-white font-sans flex items-baseline justify-center gap-0.5 sm:gap-1">
                     <span>1,500</span>
                     <span className="text-xs sm:text-base font-bold text-emerald-400">+</span>
@@ -257,7 +294,7 @@ export const Hero: React.FC = () => {
                 </div>
 
                 {/* Metric 3 */}
-                <div className="flex flex-col items-center justify-center p-1 text-center">
+                <div className="flex flex-col items-center justify-center p-0.5 sm:p-1 text-center">
                   <div className="text-base sm:text-2xl md:text-3xl font-black text-emerald-400 font-sans tracking-tight">
                     ALL-IN-ONE
                   </div>
@@ -274,7 +311,7 @@ export const Hero: React.FC = () => {
       </motion.div>
 
       {/* Bottom Scroll Indicator */}
-      <div className="pt-2 pb-4 sm:pb-6 z-10">
+      <div className="pt-1 pb-3 sm:pb-6 z-10">
         <a
           href="#organization"
           className="inline-flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors animate-bounce"
@@ -289,4 +326,3 @@ export const Hero: React.FC = () => {
 };
 
 export default Hero;
-
